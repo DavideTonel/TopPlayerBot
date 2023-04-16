@@ -7,8 +7,6 @@ from telebot import types
 from soccer.Tournament import Tournament
 from soccer.Match import MatchBuilder
 
-from prettytable import PrettyTable
-
 # logger = telebot.logger
 # telebot.logger.setLevel(logging.DEBUG)
 
@@ -120,12 +118,6 @@ def show_rank(message):
     if len(ranking) == 0:
         msg = bot.send_message(chat_id, 'Non ci sono dei match da giudicare')
     else:
-        # table = PrettyTable(padding_width = 10)
-        # table.field_names = ['Name', 'Score', 'Goal Difference']
-        # for player in ranking:
-        #     table.add_row([player.name, player.score, player.getGoalDifference()])
-        #ranking_str = table.get_string()
-
         position = 1
         ranking_str = '\n'
         for player in ranking:
