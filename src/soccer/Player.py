@@ -1,14 +1,14 @@
 class Player:
     def __init__(self, name : str):
         self.name = name
-        self.total_goal_scored = 0
-        self.total_goal_received = 0
+        self.totalGoalScored = 0
+        self.totalGoalReceived = 0
         self.score = 0
 
     def __str__(self):
         return  'Name: ' + str(self.name) + '\t' \
-                'Total Goal: ' + str(self.total_goal_scored) + '\t' \
-                'Goal Received: ' + str(self.total_goal_received) + '\t' \
+                'Total Goal: ' + str(self.totalGoalScored) + '\t' \
+                'Goal Received: ' + str(self.totalGoalReceived) + '\t' \
                 'Score: ' + str(self.score)
     
     def __lt__(self, other):
@@ -23,15 +23,15 @@ class Player:
                 return False
         
 
-    def updateStatistics(self, goal_scored : int, goal_received : int):
-        self.total_goal_scored += goal_scored
-        self.total_goal_received += goal_received
+    def updateStatistics(self, goalScored : int, goalReceived : int):
+        self.totalGoalScored += goalScored
+        self.totalGoalReceived += goalReceived
 
     def updateScore(self, score : int):
         self.score += score
 
     def getGoalDifference(self):
-        return self.total_goal_scored - self.total_goal_received
+        return self.totalGoalScored - self.totalGoalReceived
 
     def getName(self) -> str:
         return self.name
