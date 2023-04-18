@@ -87,7 +87,7 @@ def store_match(message):
         matchBuilder = MatchBuilder()
         try:
             tournament = tournamentDB[chat_id]
-        except Exception:
+        except KeyError:
             msg = bot.send_message(
                 chat_id, "Non esiste un torneo in questa chat"
             )
@@ -107,7 +107,7 @@ def store_player1(message, matchBuilder: MatchBuilder):
     chat_id = message.chat.id
     try:
         tournament = tournamentDB[chat_id]
-    except Exception:
+    except KeyError:
         msg = bot.send_message(
             chat_id, "Non esiste un torneo in questa chat"
         )
@@ -128,7 +128,7 @@ def store_player2(message, matchBuilder: MatchBuilder):
 
     try:
         tournament = tournamentDB[chat_id]
-    except Exception:
+    except KeyError:
         msg = bot.send_message(
             chat_id, "Non esiste un torneo in questa chat"
         )
@@ -171,7 +171,7 @@ def store_score_player2(message, matchBuilder: MatchBuilder):
     else:
         try:
             tournament = tournamentDB[chat_id]
-        except Exception:
+        except KeyError:
             msg = bot.send_message(
                 chat_id, "Non esiste un torneo in questa chat"
             )
@@ -197,7 +197,7 @@ def matchesLeft(message):
     if checkPassword(chat_id):
         try:
             tournament = tournamentDB[chat_id]
-        except Exception:
+        except KeyError:
             msg = bot.send_message(
                 chat_id, "Non esiste un torneo in questa chat"
             )
@@ -219,7 +219,7 @@ def reset_tournament(message):
     if checkPassword(chat_id):
         try:
             tournament = tournamentDB[chat_id]
-        except Exception:
+        except KeyError:
             msg = bot.send_message(
                 chat_id, "Non esiste un torneo in questa chat"
             )
@@ -234,7 +234,7 @@ def show_rank(message):
     if checkPassword(chat_id):
         try:
             tournament = tournamentDB[chat_id]
-        except Exception:
+        except KeyError:
             msg = bot.send_message(
                 chat_id, "Non esiste un torneo in questa chat"
             )
@@ -266,7 +266,7 @@ def awards(message):
     if checkPassword(chat_id):
         try:
             tournament = tournamentDB[chat_id]
-        except Exception:
+        except KeyError:
             msg = bot.send_message(
                 chat_id, "Non esiste un torneo in questa chat"
             )
