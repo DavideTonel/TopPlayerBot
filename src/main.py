@@ -12,7 +12,9 @@ from soccer.Match import MatchBuilder
 # logger = telebot.logger
 # telebot.logger.setLevel(logging.DEBUG)
 
-tournament = Tournament()
+# id (chat or group) --> tournament
+tournamentDB = {}
+
 bot = telebot.TeleBot(TOKEN)
 whiteList = []
 if __name__ == "__main__":
@@ -63,6 +65,8 @@ def process_names(message):
     try:
         text = message.text
         names = text.replace(" ", "").split(",")
+        tournamentDB[chat_id] = Tournament()
+        tournament = tournamentDB[chat_id]
         tournament.setPlayers(names)
 
     except Exception as e:
@@ -81,29 +85,41 @@ def store_match(message):
     chat_id = message.chat.id
     if checkPassword(chat_id):
         matchBuilder = MatchBuilder()
+        try:
+            tournament = tournamentDB[chat_id]
+        except Exception:
+            msg = bot.send_message(
+                chat_id, "Non esiste un torneo in questa chat"
+            )
+        else:
+            # show all players' buttons
+            keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+            for name in tournament.getPlayerNames():
+                keyboard.add(types.KeyboardButton(name))
 
-        # show all players' buttons
-        keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        for name in tournament.getPlayerNames():
-            keyboard.add(types.KeyboardButton(name))
-
-        msg = bot.send_message(
-            chat_id, "Chi è il primo giocatore?", reply_markup=keyboard
-        )
-        bot.register_next_step_handler(msg, store_player1, matchBuilder)
+            msg = bot.send_message(
+                chat_id, "Chi è il primo giocatore?", reply_markup=keyboard
+            )
+            bot.register_next_step_handler(msg, store_player1, matchBuilder)
 
 
 def store_player1(message, matchBuilder: MatchBuilder):
     chat_id = message.chat.id
-
     try:
-        matchBuilder.setPlayer1(tournament.getPlayerByName(message.text))
-    except:
-        msg = bot.send_message(chat_id, "Inserimento non valido, riprova")
-        bot.register_next_step_handler(msg, store_player1, matchBuilder)
+        tournament = tournamentDB[chat_id]
+    except Exception:
+        msg = bot.send_message(
+            chat_id, "Non esiste un torneo in questa chat"
+        )
     else:
-        msg = bot.send_message(chat_id, "Chi è il secondo giocatore?")
-        bot.register_next_step_handler(msg, store_player2, matchBuilder)
+        try:
+            matchBuilder.setPlayer1(tournament.getPlayerByName(message.text))
+        except:
+            msg = bot.send_message(chat_id, "Inserimento non valido, riprova")
+            bot.register_next_step_handler(msg, store_player1, matchBuilder)
+        else:
+            msg = bot.send_message(chat_id, "Chi è il secondo giocatore?")
+            bot.register_next_step_handler(msg, store_player2, matchBuilder)
 
 
 def store_player2(message, matchBuilder: MatchBuilder):
@@ -111,17 +127,24 @@ def store_player2(message, matchBuilder: MatchBuilder):
     keyboard = types.ReplyKeyboardRemove(selective=False)
 
     try:
-        matchBuilder.setPlayer2(tournament.getPlayerByName(message.text))
-    except:
-        msg = bot.send_message(chat_id, "Inserimento non valido, riprova")
-        bot.register_next_step_handler(msg, store_player2, matchBuilder, keyboard)
-    else:
+        tournament = tournamentDB[chat_id]
+    except Exception:
         msg = bot.send_message(
-            chat_id,
-            "Quanti goal ha segnato " + matchBuilder.p1.getName() + "?",
-            reply_markup=keyboard,
+            chat_id, "Non esiste un torneo in questa chat"
         )
-        bot.register_next_step_handler(msg, store_score_player1, matchBuilder)
+    else:
+        try:
+            matchBuilder.setPlayer2(tournament.getPlayerByName(message.text))
+        except:
+            msg = bot.send_message(chat_id, "Inserimento non valido, riprova")
+            bot.register_next_step_handler(msg, store_player2, matchBuilder, keyboard)
+        else:
+            msg = bot.send_message(
+                chat_id,
+                "Quanti goal ha segnato " + matchBuilder.p1.getName() + "?",
+                reply_markup=keyboard,
+            )
+            bot.register_next_step_handler(msg, store_score_player1, matchBuilder)
 
 
 def store_score_player1(message, matchBuilder: MatchBuilder):
@@ -146,12 +169,19 @@ def store_score_player2(message, matchBuilder: MatchBuilder):
         msg = bot.send_message(chat_id, "Inserimento non valido, riprova")
         bot.register_next_step_handler(msg, store_score_player2, matchBuilder)
     else:
-        status = addMatchInTorunament(matchBuilder)
-        if status:
-            msg = bot.send_message(chat_id, "Match salvato")
+        try:
+            tournament = tournamentDB[chat_id]
+        except Exception:
+            msg = bot.send_message(
+                chat_id, "Non esiste un torneo in questa chat"
+            )
+        else:
+            status = addMatchInTorunament(matchBuilder, tournament)
+            if status:
+                msg = bot.send_message(chat_id, "Match salvato")
 
 
-def addMatchInTorunament(matchBuilder: MatchBuilder):
+def addMatchInTorunament(matchBuilder: MatchBuilder, tournament: Tournament):
     try:
         tournament.addMatch(matchBuilder.build())
     except Exception as e:
@@ -165,33 +195,84 @@ def addMatchInTorunament(matchBuilder: MatchBuilder):
 def matchesLeft(message):
     chat_id = message.chat.id
     if checkPassword(chat_id):
-        combinations = itertools.combinations(tournament.getPlayerNames(), 2)
-        l = [' '.join(i) for i in combinations]
-        for m in tournament.getMatches():
-            for comb in l:
-                if m.getPlayer1().getName() in comb and m.getPlayer2().getName() in comb:
-                    l.remove(comb) 
-        msg = bot.send_message(
-            chat_id,  '\n'.join(l) if len(l)>0 else "No more matches"
-        )
+        try:
+            tournament = tournamentDB[chat_id]
+        except Exception:
+            msg = bot.send_message(
+                chat_id, "Non esiste un torneo in questa chat"
+            )
+        else:
+            combinations = itertools.combinations(tournament.getPlayerNames(), 2)
+            l = [' '.join(i) for i in combinations]
+            for m in tournament.getMatches():
+                for comb in l:
+                    if m.getPlayer1().getName() in comb and m.getPlayer2().getName() in comb:
+                        l.remove(comb) 
+            msg = bot.send_message(
+                chat_id,  '\n'.join(l) if len(l)>0 else "No more matches"
+            )
 
 
 @bot.message_handler(commands=["reset"])
 def reset_tournament(message):
     chat_id = message.chat.id
     if checkPassword(chat_id):
-        tournament.reset()
-        msg = bot.send_message(chat_id, "Torneo concluso")
+        try:
+            tournament = tournamentDB[chat_id]
+        except Exception:
+            msg = bot.send_message(
+                chat_id, "Non esiste un torneo in questa chat"
+            )
+        else:
+            tournament.reset()
+            msg = bot.send_message(chat_id, "Torneo concluso")
 
 
 @bot.message_handler(commands=["ranking"])
 def show_rank(message):
     chat_id = message.chat.id
     if checkPassword(chat_id):
-        ranking = tournament.getRanking()
-        if len(ranking) == 0:
-            msg = bot.send_message(chat_id, "Non ci sono dei match da giudicare")
-        else:
+        try:
+            tournament = tournamentDB[chat_id]
+        except Exception:
+            msg = bot.send_message(
+                chat_id, "Non esiste un torneo in questa chat"
+            )
+        else:            
+            ranking = tournament.getRanking()
+            if len(ranking) == 0:
+                msg = bot.send_message(chat_id, "Non ci sono dei match da giudicare")
+            else:
+                position = 1
+                ranking_str = "\n"
+                for player in ranking:
+                    ranking_str += (
+                        str(position)
+                        + "\t"
+                        + str(player.name)
+                        + "\t"
+                        + str(player.score)
+                        + "\t"
+                        + str(player.getGoalDifference())
+                    )
+                    ranking_str += "\n"
+                    position += 1
+                msg = bot.send_message(chat_id, ranking_str)
+
+
+@bot.message_handler(commands=["awards"])
+def awards(message):
+    chat_id = message.chat.id
+    if checkPassword(chat_id):
+        try:
+            tournament = tournamentDB[chat_id]
+        except Exception:
+            msg = bot.send_message(
+                chat_id, "Non esiste un torneo in questa chat"
+            )
+        else:          
+            ranking = tournament.getRanking()
+
             position = 1
             ranking_str = "\n"
             for player in ranking:
@@ -208,31 +289,8 @@ def show_rank(message):
                 position += 1
             msg = bot.send_message(chat_id, ranking_str)
 
-
-@bot.message_handler(commands=["awards"])
-def awards(message):
-    chat_id = message.chat.id
-    if checkPassword(chat_id):
-        ranking = tournament.getRanking()
-
-        position = 1
-        ranking_str = "\n"
-        for player in ranking:
-            ranking_str += (
-                str(position)
-                + "\t"
-                + str(player.name)
-                + "\t"
-                + str(player.score)
-                + "\t"
-                + str(player.getGoalDifference())
-            )
-            ranking_str += "\n"
-            position += 1
-        msg = bot.send_message(chat_id, ranking_str)
-
-        # no need to remember data
-        reset_tournament(message)
+            # no need to remember data
+            reset_tournament(message)
 
 
 bot.infinity_polling()
