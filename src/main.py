@@ -2,7 +2,7 @@ import telebot
 import logging
 from config import TOKEN
 from config import PASSWORD
-import itertools
+import bcrypt
 
 from telebot import types
 
@@ -50,7 +50,7 @@ def checkPassword(chat_id):
 def process_password(message):
     chat_id = message.chat.id
     text = message.text
-    if text == PASSWORD:
+    if bcrypt.checkpw(text.encode('utf-8'), PASSWORD.encode('utf-8')):
         whiteList.append(chat_id)
         with open("whitelist.txt", "a") as wlFile:
             wlFile.write(str(chat_id) + "\n")
@@ -65,10 +65,8 @@ def process_names(message):
     try:
         text = message.text
         names = text.replace(" ", "").split(",")
-        tournamentDB[chat_id] = Tournament()
+        tournamentDB[chat_id] = Tournament(names)
         tournament = tournamentDB[chat_id]
-        tournament.setPlayers(names)
-
     except Exception as e:
         print(e)
         msg = bot.send_message(
@@ -84,9 +82,9 @@ def process_names(message):
 def store_match(message):
     chat_id = message.chat.id
     if checkPassword(chat_id):
-        matchBuilder = MatchBuilder()
         try:
             tournament = tournamentDB[chat_id]
+            matchBuilder = MatchBuilder(tournament)
         except KeyError:
             msg = bot.send_message(
                 chat_id, "Non esiste un torneo in questa chat"
@@ -137,7 +135,7 @@ def store_player2(message, matchBuilder: MatchBuilder):
             matchBuilder.setPlayer2(tournament.getPlayerByName(message.text))
         except:
             msg = bot.send_message(chat_id, "Inserimento non valido, riprova")
-            bot.register_next_step_handler(msg, store_player2, matchBuilder, keyboard)
+            bot.register_next_step_handler(msg, store_player2, matchBuilder)
         else:
             msg = bot.send_message(
                 chat_id,
@@ -202,14 +200,8 @@ def matchesLeft(message):
                 chat_id, "Non esiste un torneo in questa chat"
             )
         else:
-            combinations = itertools.combinations(tournament.getPlayerNames(), 2)
-            l = [' '.join(i) for i in combinations]
-            for m in tournament.getMatches():
-                for comb in l:
-                    if m.getPlayer1().getName() in comb and m.getPlayer2().getName() in comb:
-                        l.remove(comb) 
             msg = bot.send_message(
-                chat_id,  '\n'.join(l) if len(l)>0 else "No more matches"
+                chat_id,  ''.join(str(tournament.getMatchesLeft())[1:-1].split(",")) if len(tournament.getMatchesLeft())>0 else "No more matches"
             )
 
 

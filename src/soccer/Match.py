@@ -47,7 +47,8 @@ class Match:
 
 
 class MatchBuilder:
-    def __init__(self):
+    def __init__(self, tournament):
+        self.tournament = tournament
         self.p1 = None
         self.p2 = None
         self.scorePlayer1 = None
@@ -59,6 +60,8 @@ class MatchBuilder:
     def setPlayer2(self, player2: Player) -> None:
         if self.p1.name == player2.name:
             raise Exception(self.p1.name + " non può scontrarsi con sè stesso")
+        if (self.p1.name,player2.name) not in self.tournament.getMatchesLeft() and (player2.name,self.p1.name) not in self.tournament.getMatchesLeft():
+            raise Exception(self.p1.name + " match non previsto")
         self.p2 = player2
 
     def setScorePlayer1(self, scorePlayer1: int) -> None:
