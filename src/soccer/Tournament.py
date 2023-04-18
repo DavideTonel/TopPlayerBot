@@ -1,11 +1,12 @@
 from .Player import Player
 from .Match import Match
+from typing import List
 
 
 class Tournament:
     def __init__(self):
         self.players = {}
-        self.matches = []
+        self.matches:List[Match] = []
 
     def setPlayers(self, names : set):
         for name in names:
@@ -13,7 +14,8 @@ class Tournament:
 
     def addMatch(self, match : Match):
         self.matches.append(match)
-
+    def getMatches(self):
+        return self.matches
     def getRanking(self) -> list:
         if (len(self.matches) <= 0):
             return []
