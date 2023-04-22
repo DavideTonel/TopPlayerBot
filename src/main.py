@@ -2,7 +2,7 @@ import telebot
 import logging
 from config import TOKEN
 from config import PASSWORD
-import bcrypt
+import hashlib
 
 from telebot import types
 
@@ -50,7 +50,7 @@ def checkPassword(chat_id):
 def process_password(message):
     chat_id = message.chat.id
     text = message.text
-    if bcrypt.checkpw(text.encode('utf-8'), PASSWORD.encode('utf-8')):
+    if hashlib.sha256(text.encode('utf-8')).hexdigest() == PASSWORD:
         whiteList.append(chat_id)
         with open("whitelist.txt", "a") as wlFile:
             wlFile.write(str(chat_id) + "\n")
