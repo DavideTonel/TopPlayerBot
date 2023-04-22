@@ -111,6 +111,8 @@ def store_player1(message, matchBuilder: MatchBuilder):
         )
     else:
         try:
+            if(message.text=="/reset"):
+                return
             matchBuilder.setPlayer1(tournament.getPlayerByName(message.text))
         except:
             msg = bot.send_message(chat_id, "Inserimento non valido, riprova")
@@ -132,6 +134,8 @@ def store_player2(message, matchBuilder: MatchBuilder):
         )
     else:
         try:
+            if(message.text=="/reset"):
+                return
             matchBuilder.setPlayer2(tournament.getPlayerByName(message.text))
         except:
             msg = bot.send_message(chat_id, "Inserimento non valido, riprova")
